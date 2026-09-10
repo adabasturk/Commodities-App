@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Meridian Commodities"
+description = "A mobile-first internal margin-tracking and trade-analytics app for a bulk fertilizer export desk, with shipment CRUD, dashboard KPIs, market summaries, supplier performance, filters, and CSV tools."
+version = "1.0.0"
+id = "artifacts/meridian-commodities"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20139
+
+[services.development]
+run = "pnpm --filter @workspace/meridian-commodities run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/meridian-commodities", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/meridian-commodities/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20139"
+BASE_PATH = "/"

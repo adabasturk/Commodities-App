@@ -1,0 +1,578 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Meridian Commodities internal trade analytics API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: shipments
+    description: Shipment records and CSV operations
+  - name: analytics
+    description: Dashboard and supplier aggregates
+  - name: metadata
+    description: Autocomplete metadata
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /shipments:
+    get:
+      operationId: listShipments
+      tags: [shipments]
+      summary: List shipments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Year"
+        - name: country
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: product
+          in: query
+          schema:
+            type: string
+        - name: loadingCompany
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Paginated shipments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipmentList"
+    post:
+      operationId: createShipment
+      tags: [shipments]
+      summary: Create a shipment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipmentInput"
+      responses:
+        "201":
+          description: Created shipment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /shipments/{id}:
+    get:
+      operationId: getShipment
+      tags: [shipments]
+      summary: Get a shipment
+      parameters:
+        - $ref: "#/components/parameters/ShipmentId"
+      responses:
+        "200":
+          description: Shipment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateShipment
+      tags: [shipments]
+      summary: Update a shipment
+      parameters:
+        - $ref: "#/components/parameters/ShipmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipmentUpdate"
+      responses:
+        "200":
+          description: Updated shipment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteShipment
+      tags: [shipments]
+      summary: Delete a shipment
+      parameters:
+        - $ref: "#/components/parameters/ShipmentId"
+      responses:
+        "204":
+          description: Shipment deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /shipments/reset:
+    post:
+      operationId: resetDemoData
+      tags: [shipments]
+      summary: Reset shipments to demo data
+      responses:
+        "200":
+          description: Reset result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetResult"
+  /shipments/export:
+    get:
+      operationId: exportShipments
+      tags: [shipments]
+      summary: Export shipments as CSV
+      responses:
+        "200":
+          description: CSV export
+          content:
+            text/csv:
+              schema:
+                type: string
+  /shipments/import:
+    post:
+      operationId: importShipments
+      tags: [shipments]
+      summary: Import shipments from parsed CSV rows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ShipmentInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /analytics/dashboard:
+    get:
+      operationId: getDashboardSummary
+      tags: [analytics]
+      summary: Get dashboard metrics and country summary
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - name: country
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: product
+          in: query
+          schema:
+            type: string
+        - name: loadingCompany
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /analytics/suppliers:
+    get:
+      operationId: getSupplierSummary
+      tags: [analytics]
+      summary: Get all-time supplier summary
+      responses:
+        "200":
+          description: Supplier summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierSummary"
+  /metadata:
+    get:
+      operationId: getMetadata
+      tags: [metadata]
+      summary: Get autocomplete metadata
+      responses:
+        "200":
+          description: Metadata values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metadata"
+components:
+  parameters:
+    ShipmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Search:
+      name: search
+      in: query
+      schema:
+        type: string
+    Year:
+      name: year
+      in: query
+      schema:
+        type: integer
+        minimum: 2020
+        maximum: 2100
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shipmentDate:
+          type: string
+          format: date
+        customer:
+          type: string
+        country:
+          type: string
+        quantityMt:
+          type: number
+        sellingPriceFob:
+          type: number
+        purchaseCost:
+          type: number
+        freightInsurance:
+          type: number
+        vesselName:
+          type: ["string", "null"]
+        product:
+          type: ["string", "null"]
+        loadingCompany:
+          type: ["string", "null"]
+        loadingPort:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        revenue:
+          type: number
+        cost:
+          type: number
+        profit:
+          type: number
+        margin:
+          type: number
+      required:
+        - id
+        - shipmentDate
+        - customer
+        - country
+        - quantityMt
+        - sellingPriceFob
+        - purchaseCost
+        - freightInsurance
+        - vesselName
+        - product
+        - loadingCompany
+        - loadingPort
+        - createdAt
+        - revenue
+        - cost
+        - profit
+        - margin
+    ShipmentInput:
+      type: object
+      properties:
+        shipmentDate:
+          type: string
+          format: date
+        customer:
+          type: string
+          minLength: 1
+        country:
+          type: string
+          minLength: 1
+        quantityMt:
+          type: number
+          minimum: 0
+        sellingPriceFob:
+          type: number
+          minimum: 0
+          default: 0
+        purchaseCost:
+          type: number
+          minimum: 0
+          default: 0
+        freightInsurance:
+          type: number
+          minimum: 0
+          default: 0
+        vesselName:
+          type: string
+        product:
+          type: string
+        loadingCompany:
+          type: string
+        loadingPort:
+          type: string
+      required:
+        - shipmentDate
+        - customer
+        - country
+        - quantityMt
+    ShipmentUpdate:
+      type: object
+      properties:
+        shipmentDate:
+          type: string
+          format: date
+        customer:
+          type: string
+          minLength: 1
+        country:
+          type: string
+          minLength: 1
+        quantityMt:
+          type: number
+          minimum: 0
+        sellingPriceFob:
+          type: number
+          minimum: 0
+        purchaseCost:
+          type: number
+          minimum: 0
+        freightInsurance:
+          type: number
+          minimum: 0
+        vesselName:
+          type: string
+        product:
+          type: string
+        loadingCompany:
+          type: string
+        loadingPort:
+          type: string
+    ShipmentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Shipment"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        hasMore:
+          type: boolean
+      required: [items, total, page, pageSize, hasMore]
+    Metrics:
+      type: object
+      properties:
+        revenue:
+          type: number
+        profit:
+          type: number
+        volumeMt:
+          type: number
+        margin:
+          type: number
+        shipmentCount:
+          type: integer
+      required: [revenue, profit, volumeMt, margin, shipmentCount]
+    CustomerSummary:
+      allOf:
+        - $ref: "#/components/schemas/Metrics"
+        - type: object
+          properties:
+            customer:
+              type: string
+          required: [customer]
+    CountrySummary:
+      allOf:
+        - $ref: "#/components/schemas/Metrics"
+        - type: object
+          properties:
+            country:
+              type: string
+            customers:
+              type: array
+              items:
+                $ref: "#/components/schemas/CustomerSummary"
+          required: [country, customers]
+    DashboardSummary:
+      type: object
+      properties:
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountrySummary"
+      required: [metrics, countries]
+    SupplierMarket:
+      allOf:
+        - $ref: "#/components/schemas/Metrics"
+        - type: object
+          properties:
+            country:
+              type: string
+          required: [country]
+    SupplierSummaryItem:
+      allOf:
+        - $ref: "#/components/schemas/Metrics"
+        - type: object
+          properties:
+            loadingCompany:
+              type: string
+            markets:
+              type: array
+              items:
+                $ref: "#/components/schemas/SupplierMarket"
+          required: [loadingCompany, markets]
+    SupplierSummary:
+      type: object
+      properties:
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+        suppliers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierSummaryItem"
+      required: [metrics, suppliers]
+    Metadata:
+      type: object
+      properties:
+        customers:
+          type: array
+          items:
+            type: string
+        countries:
+          type: array
+          items:
+            type: string
+        products:
+          type: array
+          items:
+            type: string
+        loadingCompanies:
+          type: array
+          items:
+            type: string
+        loadingPorts:
+          type: array
+          items:
+            type: string
+        years:
+          type: array
+          items:
+            type: integer
+      required: [customers, countries, products, loadingCompanies, loadingPorts, years]
+    ResetResult:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+    ImportResult:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+
