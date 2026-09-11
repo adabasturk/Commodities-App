@@ -1,1 +1,2 @@
 - [Managed authentication](auth-provider.md) — Meridian uses Replit-managed Clerk for web sign-in, with cookie-backed protected API routes.
+- [Expo DevTools environment](expo-devtools-environment.md) — Expo SDK 57 may log a missing libglib error for React Native DevTools while Metro and web preview continue normally.

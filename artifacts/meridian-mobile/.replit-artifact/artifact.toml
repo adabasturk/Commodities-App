@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/meridian-mobile/"
+title = "Meridian Mobile"
+description = "Meridian Commodities için iOS ve Android mobil uygulaması. Kimlik doğrulama, masa dashboard KPI'ları, sevkiyat kayıtları, ülke ve tedarikçi özetlerini mobil kullanım için sunar."
+version = "1.0.0"
+id = "artifacts/meridian-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/meridian-mobile/" ]
+localPort = 25161
+
+[services.development]
+run = "pnpm --filter @workspace/meridian-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/meridian-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/meridian-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "25161"
+BASE_PATH = "/meridian-mobile/"
