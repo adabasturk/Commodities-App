@@ -1,0 +1,1 @@
+- [Managed authentication](auth-provider.md) — Meridian uses Replit-managed Clerk for web sign-in, with cookie-backed protected API routes.

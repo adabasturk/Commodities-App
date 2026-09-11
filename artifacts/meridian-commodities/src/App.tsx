@@ -1,11 +1,14 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { ClerkProvider, Show, SignIn, SignUp, useClerk, useUser } from '@clerk/react';
+import { publishableKeyFromHost } from '@clerk/react/internal';
+import { shadcn } from '@clerk/themes';
 import {
   ChevronDown, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Download,
   LayoutDashboard, Pencil, Plus, Search, Settings, Ship, SlidersHorizontal,
   Trash2, TrendingUp, Upload, X,
 } from 'lucide-react';
-import { Link, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { Link, Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import {
   getExportShipmentsQueryKey, getGetDashboardSummaryQueryKey, getGetMetadataQueryKey,
   getGetShipmentQueryKey, getGetSupplierSummaryQueryKey, getListShipmentsQueryKey,
@@ -20,6 +23,74 @@ import NotFound from '@/pages/not-found';
 import './index.css';
 
 const queryClient = new QueryClient();
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const workspacePath = '/user-portal';
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+
+if (!clerkPubKey) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
+}
+
+function stripBase(path: string) {
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || '/'
+    : path;
+}
+
+const clerkAppearance = {
+  theme: shadcn,
+  cssLayerName: 'clerk',
+  options: {
+    logoPlacement: 'inside' as const,
+    logoLinkUrl: basePath || '/',
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    socialButtonsPlacement: 'top' as const,
+    socialButtonsVariant: 'blockButton' as const,
+  },
+  variables: {
+    colorPrimary: '#2d8cff',
+    colorForeground: '#e2e8f0',
+    colorMutedForeground: '#94a3b8',
+    colorDanger: '#f87171',
+    colorBackground: '#0e1727',
+    colorInput: '#091321',
+    colorInputForeground: '#e2e8f0',
+    colorNeutral: '#334155',
+    fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+    borderRadius: '0.6rem',
+  },
+  elements: {
+    rootBox: 'w-full flex justify-center',
+    cardBox: 'bg-[#0e1727] rounded-2xl w-[440px] max-w-full overflow-hidden',
+    card: '!shadow-none !border-0 !bg-transparent !rounded-none',
+    footer: '!shadow-none !border-0 !bg-transparent !rounded-none',
+    headerTitle: '!text-slate-100',
+    headerSubtitle: '!text-slate-400',
+    socialButtonsBlockButtonText: '!text-slate-200',
+    formFieldLabel: '!text-slate-300',
+    footerActionLink: '!text-blue-300',
+    footerActionText: '!text-slate-400',
+    dividerText: '!text-slate-500',
+    identityPreviewEditButton: '!text-blue-300',
+    formFieldSuccessText: '!text-emerald-300',
+    alertText: '!text-red-200',
+    logoBox: 'mb-3',
+    logoImage: 'max-h-9',
+    socialButtonsBlockButton: '!border-slate-700 !bg-[#091321] hover:!bg-slate-800',
+    formButtonPrimary: '!bg-[#1677d2] hover:!bg-[#2d8cff]',
+    formFieldInput: '!border-slate-700 !bg-[#091321] !text-slate-100',
+    footerAction: '!bg-transparent',
+    dividerLine: '!bg-slate-700',
+    alert: '!border-red-500/30 !bg-red-950/30',
+    otpCodeFieldInput: '!border-slate-700 !bg-[#091321] !text-slate-100',
+    formFieldRow: 'mb-4',
+    main: '!bg-transparent',
+  },
+};
 function money(value: number | null | undefined, units: 'USD' | 'EUR') {
   const raw = Number.isFinite(Number(value)) ? Number(value) : 0;
   const n = units === 'EUR' ? raw * 0.92 : raw;
@@ -79,11 +150,13 @@ function MetricsGrid({ metrics, units, volumeUnit = 'MT' }: { metrics?: Metrics;
 
 function AppShell({ children, title, eyebrow }: { children: ReactNode; title: string; eyebrow?: string }) {
   const [location] = useLocation();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const nav = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, test: 'dashboard' },
-    { href: '/shipments', label: 'Shipments', icon: Ship, test: 'shipments' },
-    { href: '/summary', label: 'Summary', icon: TrendingUp, test: 'summary' },
-    { href: '/settings', label: 'Settings', icon: Settings, test: 'settings' },
+    { href: workspacePath, label: 'Dashboard', icon: LayoutDashboard, test: 'dashboard' },
+    { href: `${workspacePath}/shipments`, label: 'Shipments', icon: Ship, test: 'shipments' },
+    { href: `${workspacePath}/summary`, label: 'Summary', icon: TrendingUp, test: 'summary' },
+    { href: `${workspacePath}/settings`, label: 'Settings', icon: Settings, test: 'settings' },
   ];
   return <div className="min-h-[100dvh] bg-[#080f1b] text-slate-200">
     <aside className="fixed inset-y-0 left-0 hidden w-[228px] border-r border-slate-800/80 bg-[#091321] px-4 py-5 lg:block">
@@ -97,8 +170,8 @@ function AppShell({ children, title, eyebrow }: { children: ReactNode; title: st
     <main className="mx-auto min-h-[100dvh] max-w-[1180px] lg:ml-[228px]">
       <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#080f1b]/95 px-4 py-4 backdrop-blur-md md:px-7">
         <div className="flex items-center justify-between">
-          <div><div className="mb-1 text-[10px] font-semibold uppercase tracking-[.18em] text-blue-400">{eyebrow || 'Meridian / trade analytics'}</div><h1 data-testid="text-page-title" className="text-[22px] font-semibold tracking-tight text-slate-100">{title}</h1></div>
-          <div className="hidden items-center gap-3 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-400" /><span className="text-xs text-slate-500">Data synced</span></div>
+           <div><div className="mb-1 text-[10px] font-semibold uppercase tracking-[.18em] text-blue-400">{eyebrow || 'Meridian / trade analytics'}</div><h1 data-testid="text-page-title" className="text-[22px] font-semibold tracking-tight text-slate-100">{title}</h1></div>
+           <div className="flex items-center gap-2"><span className="hidden h-2 w-2 rounded-full bg-emerald-400 sm:block" /><span className="hidden text-xs text-slate-500 sm:block">Data synced</span><button data-testid="button-account" onClick={() => signOut({ redirectUrl: basePath || '/' })} className="flex min-h-10 items-center gap-2 rounded-md border border-slate-800 px-2 text-left hover:border-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-blue-500/15 text-[10px] font-semibold text-blue-300">{(user?.firstName?.[0] || user?.emailAddresses[0]?.emailAddress[0] || 'M').toUpperCase()}</span><span className="hidden max-w-28 truncate text-xs text-slate-400 md:block">{user?.firstName || user?.emailAddresses[0]?.emailAddress}</span></button></div>
           <span className="grid h-11 w-11 place-items-center rounded-md border border-slate-800/70 text-[10px] font-mono text-slate-600 sm:hidden">M04</span>
         </div>
       </header>
@@ -242,9 +315,78 @@ function SettingsPage() {
   </div>{confirm && <ConfirmDialog title="Reset demo data?" text="Your current shipment register will be replaced with the demo dataset." confirm={resetDemo} cancel={() => setConfirm(false)} pending={reset.isPending} />}</AppShell>;
 }
 
+function LandingPage() {
+  return <div className="min-h-[100dvh] bg-[#080f1b] px-4 py-6 text-slate-200">
+    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-5xl flex-col justify-between rounded-2xl border border-slate-800/80 bg-[#091321] p-6 md:p-10">
+      <header className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-md bg-[#1677d2] text-white shadow-[0_0_24px_rgba(22,119,210,.2)]"><span className="font-mono font-bold">M</span></span><span><strong className="block text-sm tracking-[.16em]">MERIDIAN</strong><span className="text-[10px] uppercase tracking-[.18em] text-slate-500">commodities</span></span></header>
+      <main className="max-w-2xl py-16"><div className="mb-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.2em] text-blue-400"><span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> Internal margin workspace</div><h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight text-slate-100 md:text-6xl">Know the margin before the vessel sails.</h1><p className="mt-6 max-w-lg text-base leading-7 text-slate-400">Meridian gives bulk fertilizer export desks one focused view of shipment economics, destination performance, and supplier contribution.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="/sign-in" data-testid="link-login" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#1677d2] px-6 text-sm font-semibold text-white hover:bg-[#2d8cff]">Log in</Link><Link href="/sign-up" data-testid="link-signup" className="inline-flex min-h-12 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-slate-200 hover:border-slate-500">Create account</Link></div></main>
+      <footer className="flex flex-col gap-2 border-t border-slate-800/80 pt-5 text-[10px] uppercase tracking-[.14em] text-slate-600 sm:flex-row sm:justify-between"><span>OPS / DESK 04</span><span>Private workspace · access controlled</span></footer>
+    </div>
+  </div>;
+}
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  return <><Show when="signed-in">{children}</Show><Show when="signed-out"><Redirect to="/" /></Show></>;
+}
+
+function HomeRedirect() {
+  return <><Show when="signed-in"><Redirect to={workspacePath} /></Show><Show when="signed-out"><LandingPage /></Show></>;
+}
+
+function SignInPage() {
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-[#080f1b] px-4"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
+}
+
+function SignUpPage() {
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-[#080f1b] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+}
+
 function Router() {
   const [location] = useLocation();
-  return <ErrorBoundary resetKey={location}><Switch><Route path="/" component={Dashboard} /><Route path="/shipments" component={Shipments} /><Route path="/summary" component={Summary} /><Route path="/settings" component={SettingsPage} /><Route component={NotFound} /></Switch></ErrorBoundary>;
+  return <ErrorBoundary resetKey={location}><Switch>
+    <Route path="/" component={HomeRedirect} />
+    <Route path="/sign-in/*?" component={SignInPage} />
+    <Route path="/sign-up/*?" component={SignUpPage} />
+    <Route path={workspacePath}><ProtectedRoute><Dashboard /></ProtectedRoute></Route>
+    <Route path={`${workspacePath}/shipments`}><ProtectedRoute><Shipments /></ProtectedRoute></Route>
+    <Route path={`${workspacePath}/summary`}><ProtectedRoute><Summary /></ProtectedRoute></Route>
+    <Route path={`${workspacePath}/settings`}><ProtectedRoute><SettingsPage /></ProtectedRoute></Route>
+    <Route component={NotFound} />
+  </Switch></ErrorBoundary>;
+}
+
+function ClerkQueryClientCacheInvalidator() {
+  const { addListener } = useClerk();
+  const previousUserId = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const unsubscribe = addListener(({ user }) => {
+      const userId = user?.id ?? null;
+      if (previousUserId.current !== undefined && previousUserId.current !== userId) queryClient.clear();
+      previousUserId.current = userId;
+    });
+    return unsubscribe;
+  }, [addListener]);
+  return null;
+}
+
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+  return <ClerkProvider
+    publishableKey={clerkPubKey}
+    proxyUrl={clerkProxyUrl}
+    appearance={clerkAppearance}
+    signInUrl={`${basePath}/sign-in`}
+    signUpUrl={`${basePath}/sign-up`}
+    localization={{ signIn: { start: { title: 'Welcome back', subtitle: 'Sign in to access your workspace' } }, signUp: { start: { title: 'Create your account', subtitle: 'Join the Meridian desk' } } }}
+    routerPush={(to) => setLocation(stripBase(to))}
+    routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+  >
+    <QueryClientProvider client={queryClient}>
+      <ClerkQueryClientCacheInvalidator />
+      <Router />
+      <Toaster />
+    </QueryClientProvider>
+  </ClerkProvider>;
 }
 
 function App() {
@@ -254,7 +396,7 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
   if (splash) return <div className="grid min-h-[100dvh] place-items-center bg-[#080f1b] px-6"><div className="w-full max-w-md rounded-2xl border border-blue-500/20 bg-blue-500/[.07] px-8 py-12 text-center shadow-[0_0_80px_rgba(40,125,246,.12)]"><div className="font-mono text-[clamp(1.25rem,6vw,2rem)] font-semibold tracking-[.18em] text-blue-300">MERIDIAN</div><div className="mt-2 text-[10px] uppercase tracking-[.34em] text-blue-400/70">Commodities</div></div></div>;
-  return <QueryClientProvider client={queryClient}><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></QueryClientProvider>;
+  return <WouterRouter base={basePath}><ClerkProviderWithRoutes /></WouterRouter>;
 }
 
 export default App;
