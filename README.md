@@ -16,9 +16,9 @@ Expanding a destination market breaks it down by customer:
 
 ### Mobile
 
-| Sign in | Dashboard | Narrow viewport |
-|---|---|---|
-| <img src="screenshots/Screenshot%202026-09-11%20at%2004.17.20.png" width="240"> | <img src="screenshots/Screenshot%202026-09-12%20at%2021.48.20.png" width="240"> | <img src="screenshots/meridian-dashboard.jpg" width="240"> |
+| Sign in | Dashboard |
+|---|---|
+| <img src="screenshots/Screenshot%202026-09-11%20at%2004.17.20.png" width="240"> | <img src="screenshots/Screenshot%202026-09-12%20at%2021.48.20.png" width="240"> |
 
 [Screen recording →](
 
