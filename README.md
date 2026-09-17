@@ -6,11 +6,9 @@ Shipment records go into the system, and the app rolls them up into revenue, pro
 
 Web app and React Native mobile app, sharing one API. Synthetic data throughout: company names, vessels and figures are invented.
 
-![Dashboard](screenshots/Screenshot%202026-09-12%20at%2022.42.46.png)
-
 Expanding a destination market breaks it down by customer:
 
-![Country breakdown](screenshots/Screenshot%202026-09-12%20at%2022.43.45.png)
+![Dashboard](screenshots/Screenshot%202026-09-12%20at%2022.42.46.png)
 
 | Shipment register | Trade Summary | Settings |
 |---|---|---|
