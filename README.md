@@ -20,11 +20,11 @@ Expanding a destination market breaks it down by customer:
 |---|---|
 | <img src="screenshots/Screenshot%202026-09-11%20at%2004.17.20.png" width="240"> | <img src="screenshots/Screenshot%202026-09-12%20at%2021.48.20.png" width="240"> |
 
-[Screen recording →](
+Screen recording
 
 https://github.com/user-attachments/assets/9f7e72d2-8879-43eb-a361-98f0bcce3671
 
-)
+
 
 ## Screens
 
