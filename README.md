@@ -6,13 +6,9 @@ Shipment records go into the system, and the app rolls them up into revenue, pro
 
 Web app and React Native mobile app, sharing one API. Synthetic data throughout: company names, vessels and figures are invented.
 
-Expanding a destination market breaks it down by customer:
+### Screen Recording
 
-![Dashboard](screenshots/Screenshot%202026-09-12%20at%2022.42.46.png)
-
-| Shipment register | Trade Summary | Settings |
-|---|---|---|
-| ![Shipments](screenshots/Screenshot%202026-09-12%20at%2022.44.26.png) | ![Trade Summary](screenshots/Screenshot%202026-09-12%20at%2022.45.16.png) | ![Settings](screenshots/Screenshot%202026-09-12%20at%2022.45.29.png) |
+https://github.com/user-attachments/assets/9f7e72d2-8879-43eb-a361-98f0bcce3671
 
 ### Mobile
 
@@ -20,11 +16,15 @@ Expanding a destination market breaks it down by customer:
 |---|---|
 | <img src="screenshots/Screenshot%202026-09-11%20at%2004.17.20.png" width="240"> | <img src="screenshots/Screenshot%202026-09-12%20at%2021.48.20.png" width="240"> |
 
-Screen recording
+### Web
 
-https://github.com/user-attachments/assets/9f7e72d2-8879-43eb-a361-98f0bcce3671
+### Dashboard
 
+![Dashboard](screenshots/Screenshot%202026-09-12%20at%2022.42.46.png)
 
+| Shipment register | Trade Summary | Settings |
+|---|---|---|
+| ![Shipments](screenshots/Screenshot%202026-09-12%20at%2022.44.26.png) | ![Trade Summary](screenshots/Screenshot%202026-09-12%20at%2022.45.16.png) | ![Settings](screenshots/Screenshot%202026-09-12%20at%2022.45.29.png) |
 
 ## Screens
 
